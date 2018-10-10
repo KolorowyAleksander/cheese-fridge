@@ -5,17 +5,16 @@ from bson import ObjectId
 from bson.json_util import dumps
 from flask import Flask, request, jsonify
 
-from schemas import cheese_schema, zone_schema
+from schemas import (cheese_schema, zone_schema, zone_transfer_schema, 
+                     zone_assignment_schema)
 from validation import validate, validation_error
-
+from validation.errors import (CHEESE_ASSIGNED, IF_MATCH_INVALID,
+                               IF_MATCH_MISSING, ZONE_ERROR)
 
 app = Flask(__name__)
 mongo = pymongo.MongoClient()
 fridge = mongo.fridge
 
-
-IF_MATCH_MISSING = "Missing If-Match header when updating a resource"
-IF_MATCH_INVALID = "If-Match header not matching current version"
 
 
 @app.before_request
@@ -146,13 +145,15 @@ def zones_id_route(_id):
         return (jsonify({**zone, '_id': str(zone['_id'])}), 
                 200, {'ETag': zone['version']})
 
+
 @app.route('/zones/<_id>/cheeses', methods=['GET'])
 def zones_id_cheeses_route(_id):
     zone = fridge.zones.find_one({'_id': ObjectId(_id)})
     if zone is None:
         return jsonify({'error': "Not found"}), 404
     
-    cheeses_for_zone = fridge.zone_assignments.find({'zone_id': ObjectId(_id)})
+    cheeses_for_zone = fridge.zone_assignments.find({'zone_id': _id})
+
     return dumps(cheeses_for_zone), 200
 
 
@@ -165,19 +166,44 @@ def zone_assignments_route():
 @app.route('/zone-assignments/<assignment_id>', methods=['POST'])
 def zone_assignments_request_route(assignment_id):
     data = request.get_json(force=True)
+    error = validate(data, zone_assignment_schema)
+    if error is not None:
+        return jsonify({'error': validation_error(error)}), 400
+
     assignment = fridge.zone_assignment_requests.find_one({'_id': ObjectId(assignment_id)})
     if assignment is None:
         return jsonify({'error': "Not found"}), 404
     
+    found_assignment = fridge.zone_assignments.find_one({'cheese_id': data['cheese_id']})
+    if found_assignment is not None:
+        return jsonify({'error': CHEESE_ASSIGNED})
+
+    fridge.zone_assignments.inser_one(data)
     fridge.zone_assignment_requests.delete_one(assignment)
-    fridge.zone_assignments.insert_one()
+    
+    return jsonify({'status': 'OK'}), 200
 
 
-
-@app.route('/zone-transfers')
+@app.route('/zone-transfers', methods=['POST'])
 def zone_transfers_route():
-    # from zone and to zone
-    pass
+    data = request.get_json(force=True)
+    error = validate(data, zone_transfer_schema)
+    if error is not None:
+        return jsonify({'error': validation_error(error)}), 400
+
+    cheese_id, from_zone_id, to_zone_id = (data['cheese_id'], data['from_zone_id'],
+                                           data['to_zone_id'])
+
+    zone_assignment_to_delete = {'cheese_id': cheese_id, 'zone_id': from_zone_id}
+    found = fridge.zone_assignments.find_one(zone_assignment_to_delete)
+
+    if found is None:
+        return jsonify({'error': ZONE_ERROR.format(cheese_id, from_zone_id)}), 400
+    
+    fridge.zone_assignments.insert_one({'cheese_id': cheese_id, 'zone_id': to_zone_id})
+    fridge.zone_assignments.delete_one(zone_assignment_to_delete)
+
+    return jsonify({'status': 'OK'})
 
 
 if __name__ == '__main__':

@@ -46,5 +46,5 @@ zone_assignment_schema = {
         'cheese_id': {'type': 'string'},
         'zone_id': {'type': 'string'},
     },
-    'required': ['cheese_id', 'from_zone_id', 'to_zone_id'],
+    'required': ['cheese_id', 'zone_id'],
 }
