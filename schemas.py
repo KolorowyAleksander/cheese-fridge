@@ -33,9 +33,9 @@ zone_schema = {
 zone_transfer_schema = {
     'type': 'object',
     'properties': {
-        'cheese_id': {'type': 'string'},
-        'from_zone_id': {'type': 'string'},
-        'to_zone_id': {'type': 'string'},
+        'cheese_id': {'type': 'string', 'pattern': '^[a-f\d]{24}$'},
+        'from_zone_id': {'type': 'string', 'pattern': '^[a-f\d]{24}$'},
+        'to_zone_id': {'type': 'string', 'pattern': '^[a-f\d]{24}$'},
     },
     'required': ['cheese_id', 'from_zone_id', 'to_zone_id'],
 }
@@ -43,8 +43,8 @@ zone_transfer_schema = {
 zone_assignment_schema = {
     'type': 'object',
     'properties': {
-        'cheese_id': {'type': 'string'},
-        'zone_id': {'type': 'string'},
+        'cheese_id': {'type': 'string', 'pattern': '^[a-f\d]{24}$'},
+        'zone_id': {'type': 'string', 'pattern': '^[a-f\d]{24}$'},
     },
     'required': ['cheese_id', 'zone_id'],
 }
