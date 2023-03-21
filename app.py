@@ -12,7 +12,7 @@ from validation.errors import (CHEESE_ASSIGNED, IF_MATCH_INVALID, IF_MATCH_MISSI
                                ZONE_NOT_EXISTANT, ZONE_ERROR)
 
 app = Flask(__name__)
-mongo = pymongo.MongoClient()
+mongo = pymongo.MongoClient(uuidRepresentation='standard')
 fridge = mongo.fridge
 
 
