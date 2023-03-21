@@ -59,7 +59,7 @@ def cheese_id_route(_id):
         if cheese is None:
             return jsonify({'error': "Not found"}), 404
         
-        if cheese['version'] != request.headers.get('If-Match'):
+        if str(cheese['version']) != request.headers.get('If-Match'):
             return jsonify({'error': IF_MATCH_INVALID}), 400
 
         data['version'] = str(uuid.uuid4())
@@ -117,7 +117,7 @@ def zones_id_route(_id):
         if zone is None:
             return jsonify({'error': "Not found"}), 404
         
-        if zone['version'] != request.headers.get('If-Match'):
+        if str(zone['version']) != request.headers.get('If-Match'):
             return jsonify({'error': IF_MATCH_INVALID}), 400
 
         data['version'] = str(uuid.uuid4())
