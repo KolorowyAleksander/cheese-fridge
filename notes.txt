@@ -1,0 +1,12 @@
+Instalacja mongo:
+    https://www.mongodb.com/try/download/community-kubernetes-operator
+
+
+Instalacja pythona
+
+Instalacja paczek:
+    $ pip install -r .\requirements.txt
+
+Run:
+    $ python .\app.py
+
